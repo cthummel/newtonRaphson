@@ -99,7 +99,7 @@ def thetaFunction(data, beta):
     return np.power(np.sum(data) / len(data), 1.0 / beta)
 
 
-#Generate and print the information matrix
+#Generate the information matrix
 def informationMatrix(data, beta, theta):
     matrix = np.array([[0.0,0.0], [0.0,0.0]])
     matrix[0,0] = -betaSecondDerivative(data, beta, theta)
@@ -132,16 +132,16 @@ def newtonRaphsonIteration(data, betaStart):
 
     #betaHatSE = np.sqrt(1.0 / (len(data) * matrixInv[0,0]))
     #thetaSE = np.sqrt(1.0 / (len(data) * matrixInv[1,1]))
-    betaHatSE = 1 / (np.sqrt(matrixInv[0,0]) * len(data))
-    thetaSE = 1 / (np.sqrt(matrixInv[1,1]) * len(data))
+    #betaHatSE = 1.0 / (np.sqrt(matrixInv[0,0]) * len(data))
+    #thetaSE = 1.0 / (np.sqrt(matrixInv[1,1]) * len(data))
+    betaHatSE = np.sqrt(matrixInv[0,0])
+    thetaSE = np.sqrt(matrixInv[1,1])
 
     print("Beta:\t", betaHat,"\tSE:", betaHatSE ,"\t95% CI:(", betaHat - (1.96 * betaHatSE), ",", betaHat + (1.96 * betaHatSE), ")")
     print("Theta:\t", theta, "\tSE:", thetaSE, "\t95% CI:(", theta - (1.96 * thetaSE), ",", theta + (1.96 * thetaSE), ")\n")
     print("Observed Information Matrix:", matrix)
     print()
     print("Inverse:", matrixInv)
-
-
 
 #Driver method that handles command line arguments and calls the algorithm.
 def main(argv):
@@ -156,7 +156,6 @@ def main(argv):
 
     dataset = read(inputFile)
     newtonRaphsonIteration(dataset, .1)
-
 
 
 
