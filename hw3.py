@@ -96,7 +96,7 @@ def mixedSecondDerivative(data, beta, theta):
 
 #Given a bHat, we can get the thetaHat
 def thetaFunction(data, beta):
-    return np.power(np.sum(data) / len(data), 1.0 / beta)
+    return np.power(np.sum(np.power(data, beta)) / len(data), 1.0 / beta)
 
 
 #Generate the information matrix
