@@ -1,5 +1,7 @@
 #import a few libraries for use later
 import numpy as np
+from scipy import stats
+#from scipy import stats
 import sys, getopt, math
 
 #Read in data set.
@@ -110,6 +112,47 @@ def informationMatrix(data, beta, theta):
 
 
 
+#Median Survival time is when you set the CDF to .5 and solve for x
+def medianSurvivalTime(beta, theta):
+    return theta * np.power(np.log(2), (1.0 / beta))
+
+#Derivative of median function with respect to Theta
+def medianTheta(beta):
+    return np.power(np.log(2), (1.0 / beta))
+
+#Derivative of median function with respect to Beta
+def medianBeta(beta, theta):
+    middle = np.log(np.log(2)) * np.power(np.log(2), 1.0 / beta)
+    right = -1.0 / np.power(beta, 2)
+    return theta * middle * right
+
+def medianVariance(data, beta, theta):
+    #Get the Variance-Covariance Matrix of the data set
+    matrix = informationMatrix(data, beta, theta)
+    matrixInv = np.linalg.inv(matrix)
+
+    thetaSection = np.power(medianTheta(beta), 2) * matrixInv[1,1]
+    betaSection = np.power(medianBeta(beta, theta), 2) * matrixInv[0,0]
+    covSection = 2.0 * medianTheta(beta) * medianBeta(beta, theta) * matrixInv[1,0]
+
+    return thetaSection + betaSection + covSection
+
+
+def logLikelihood(data, beta, theta):
+    n = len(data)
+
+    result = (n * np.log(beta)) - (n * beta * np.log(theta)) + ((beta - 1.0) * np.sum(np.log(data)))
+
+    for value in data:
+        result -= np.power(value / theta, beta)
+
+    return result
+
+
+def GLRT(data, beta, theta):
+    return -2 * (logLikelihood(data, 1, thetaFunction(data, 1)) - logLikelihood(data, beta, theta))
+
+
 #Iteration algorithm. Only works for Weibull parameter estimation.
 def newtonRaphsonIteration(data, betaStart):
     betaHat = betaStart
@@ -142,6 +185,7 @@ def newtonRaphsonIteration(data, betaStart):
     print("Observed Information Matrix:", matrix)
     print()
     print("Inverse:", matrixInv)
+    return betaHat, theta
 
 #Driver method that handles command line arguments and calls the algorithm.
 def main(argv):
@@ -155,9 +199,18 @@ def main(argv):
 
 
     dataset = read(inputFile)
-    newtonRaphsonIteration(dataset, .1)
+    beta, theta = newtonRaphsonIteration(dataset, .1)
 
+    median = medianSurvivalTime(beta, theta)
+    medianSE = np.sqrt(medianVariance(dataset, beta, theta))
 
+    print("")
+    print("Median:\t\t", median)
+    print("SE of Median:\t", medianSE)
+    print("CI of Median:\t", "(", median - (1.96 * medianSE), ",", median + (1.96 * medianSE), ")")
+
+    print("GLRT:\t", GLRT(dataset, beta, theta))
+    print("P-value:", 1 - stats.chi2.cdf(GLRT(dataset, beta, theta), 1))
 
 
 if __name__ == '__main__':
